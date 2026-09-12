@@ -34,8 +34,12 @@ COPY profiles ./profiles
 # не в контексте сборки, и тесты, которые их ищут, отвечают Skip, а не Fail.
 RUN go test ./...
 
-RUN go build -trimpath -ldflags="-s -w" -o /out/modsec ./cmd/modsec && \
-    go build -trimpath -ldflags="-s -w" -o /out/modsec-probe ./cmd/probe
+# Сборка в бинарь: версия и ревизия видны в журнале старта и в кадре
+# присутствия, а не только в метках образа.
+ARG VERSION=dev
+ARG REVISION=unknown
+RUN go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X main.revision=${REVISION}" -o /out/modsec ./cmd/modsec && \
+    go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X main.revision=${REVISION}" -o /out/modsec-probe ./cmd/probe
 
 FROM alpine:3.22
 

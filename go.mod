@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/corazawaf/coraza-coreruleset/v4 v4.25.0
 	github.com/corazawaf/coraza/v3 v3.7.0
-	github.com/exemt/placitum-shared v0.3.0
+	github.com/exemt/placitum-shared v0.4.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/jcchavezs/mergefs v0.1.1
 	github.com/nats-io/nats.go v1.53.1
