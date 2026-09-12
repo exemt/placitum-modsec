@@ -23,17 +23,17 @@ import (
 	"github.com/exemt/placitum-modsec/internal/audit"
 	"github.com/exemt/placitum-modsec/internal/body"
 	"github.com/exemt/placitum-modsec/internal/config"
-	"github.com/exemt/placitum-modsec/internal/dataset"
 	"github.com/exemt/placitum-modsec/internal/desired"
 	"github.com/exemt/placitum-modsec/internal/engine"
-	"github.com/exemt/placitum-shared/flow"
-	"github.com/exemt/placitum-modsec/internal/logsink"
-	"github.com/exemt/placitum-shared/netinfo"
-	"github.com/exemt/placitum-shared/pulse"
 	"github.com/exemt/placitum-modsec/internal/queue"
 	"github.com/exemt/placitum-modsec/internal/rules"
 	"github.com/exemt/placitum-modsec/internal/sticky"
 	"github.com/exemt/placitum-modsec/internal/verdict"
+	"github.com/exemt/placitum-shared/dataset"
+	"github.com/exemt/placitum-shared/flow"
+	"github.com/exemt/placitum-shared/logkit"
+	"github.com/exemt/placitum-shared/netinfo"
+	"github.com/exemt/placitum-shared/pulse"
 )
 
 func main() {
@@ -57,13 +57,13 @@ func run() error {
 	 * остаётся на месте.
 	 */
 	var (
-		logs  *logsink.Sink
+		logs  *logkit.Sink
 		logIO *flow.Counter
 	)
 
 	if config.LogShip() {
 		logIO = flow.New()
-		logs = logsink.New(config.LogWriter(cfg.Name), cfg.Name, logIO)
+		logs = logkit.NewSink(config.LogWriter(cfg.Name), cfg.Name, logIO)
 
 		defer logs.Close()
 	}
@@ -138,13 +138,13 @@ func run() error {
 	 * в несуществующий поток -- тишина, а не ошибка.
 	 */
 	if logs != nil {
-		if err := logsink.Ensure(nc); err != nil {
+		if err := logkit.Ensure(nc); err != nil {
 			log.Warn("log stream", "error", err.Error())
 		}
 
 		logs.Attach(nc)
-		log.Info("log stream", "stream", logsink.Stream,
-			"subject", logsink.Subject(logs.Writer()))
+		log.Info("log stream", "stream", logkit.Stream,
+			"subject", logkit.Subject(logs.Writer()))
 	}
 
 	/*
@@ -184,7 +184,7 @@ func run() error {
 		opts:     opts,
 		// Публикатор наборов создаётся всегда, когда есть шина: профиль с
 		// инициатором «в набор» может приехать поколением после старта.
-		lists:    dataset.New(nc, cfg.Name),
+		lists:    dataset.NewBackground(nc, cfg.Name, log),
 		resolver: resolver,
 	}
 

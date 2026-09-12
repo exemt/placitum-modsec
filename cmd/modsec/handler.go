@@ -26,15 +26,15 @@ import (
 	"github.com/exemt/placitum-modsec/internal/audit"
 	"github.com/exemt/placitum-modsec/internal/body"
 	"github.com/exemt/placitum-modsec/internal/config"
-	"github.com/exemt/placitum-modsec/internal/dataset"
 	"github.com/exemt/placitum-modsec/internal/engine"
-	"github.com/exemt/placitum-shared/netinfo"
 	"github.com/exemt/placitum-modsec/internal/prior"
 	"github.com/exemt/placitum-modsec/internal/protocol"
 	"github.com/exemt/placitum-modsec/internal/queue"
 	"github.com/exemt/placitum-modsec/internal/rules"
 	"github.com/exemt/placitum-modsec/internal/sticky"
 	"github.com/exemt/placitum-modsec/internal/verdict"
+	"github.com/exemt/placitum-shared/dataset"
+	"github.com/exemt/placitum-shared/netinfo"
 )
 
 // Коды причин инспектора. Все начинаются с MODSEC_, чтобы в аудите их было
