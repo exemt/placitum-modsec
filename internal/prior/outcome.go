@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/exemt/placitum-modsec/internal/overload"
 	"github.com/exemt/placitum-modsec/internal/protocol"
 )
 
@@ -27,13 +28,12 @@ const (
 	OnScore = "score"
 
 	/*
-	 * OnOverload -- оценка не начиналась: очередь была полна, и запрос снят на
-	 * входе (MODSEC_QUEUE_LIMIT). Протухший бюджет триггером не считается:
-	 * дедлайн бывает и у короткой волны, и дёргать инициаторы за латентность
-	 * контура значило бы банить клиента ни за что. Вердиктом эта строка не
-	 * бывает -- обработчик передаёт её в Fire как имя триггера снятия.
+	 * OnOverload -- инспектор перегружен: запрос встал в очередь, заполненную
+	 * не ниже порога at, либо снят на входе по полной очереди
+	 * (MODSEC_QUEUE_LIMIT). Смысл порога -- internal/overload, общий у всех
+	 * инспекторов. Вердиктом эта строка не бывает: её зовёт FireOverload.
 	 */
-	OnOverload = "overload"
+	OnOverload = overload.On
 
 	/*
 	 * Кого писать в набор -- те же слова, что у капчи. Адрес -- самая мелкая и
@@ -147,7 +147,8 @@ func checkPhaseAsk(do, phase, apply string) error {
  */
 type Outcome struct {
 	On string `yaml:"on"`
-	// At -- порог сравнения счёта; только при On == score, и там обязателен.
+	// At -- у score порог счёта, обязателен; у overload порог заполнения
+	// очереди в процентах, не назван -- край (internal/overload).
 	At *int `yaml:"at"`
 	// Below -- сравнивать в другую сторону: счёт < at вместо счёт >= at.
 	Below bool `yaml:"below"`
@@ -241,11 +242,6 @@ func (o Outcome) Matches(verdict string, score int) bool {
 	case OnDeny:
 		return verdict == protocol.VerdictDeny || verdict == protocol.VerdictRedirect
 
-	// Перегрузка не вердикт: обработчик зовёт Fire со строкой триггера, и
-	// совпадение имён здесь -- то же построение, что у deny и allow.
-	case OnOverload:
-		return verdict == OnOverload
-
 	case OnScore:
 		if verdict != protocol.VerdictScore || o.At == nil {
 			return false
@@ -274,9 +270,18 @@ func validateOutcome(i int, o Outcome) error {
 	where := fmt.Sprintf("outcomes[%d]", i)
 
 	switch o.On {
-	case OnDeny, OnAllow, OnOverload:
+	case OnDeny, OnAllow:
 		if o.At != nil {
-			return fmt.Errorf("%s: at is only for on: score", where)
+			return fmt.Errorf("%s: at is only for on: score or overload", where)
+		}
+
+		if o.Below || o.Eq {
+			return fmt.Errorf("%s: below and eq are only for on: score", where)
+		}
+
+	case OnOverload:
+		if err := overload.Check(o.At); err != nil {
+			return fmt.Errorf("%s: %w", where, err)
 		}
 
 		if o.Below || o.Eq {
@@ -587,10 +592,25 @@ type Fired struct {
 func Fire(outcomes []Outcome, verdict string, score int, addr string,
 	code string) Fired {
 
+	return fire(outcomes, func(o Outcome) bool { return o.Matches(verdict, score) }, addr, code)
+}
+
+/*
+ * FireOverload -- строки перегрузки: fill -- заполнение очереди при постановке
+ * запроса, shed -- запрос снят по полной очереди (internal/overload). code --
+ * повод строки, у которой свой не назван.
+ */
+func FireOverload(outcomes []Outcome, fill int, shed bool, addr, code string) Fired {
+	return fire(outcomes, func(o Outcome) bool {
+		return o.On == OnOverload && overload.Fires(overload.At(o.At), fill, shed)
+	}, addr, code)
+}
+
+func fire(outcomes []Outcome, match func(Outcome) bool, addr, code string) Fired {
 	var out Fired
 
 	for _, o := range outcomes {
-		if !o.Matches(verdict, score) {
+		if !match(o) {
 			continue
 		}
 

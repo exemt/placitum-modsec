@@ -62,7 +62,7 @@ func TestOutcomeRejects(t *testing.T) {
 		"at without score":     "outcomes:\n  - {on: allow, at: 30, list: x, ttl: 1h}\n",
 		"negative at":          "outcomes:\n  - {on: score, at: -1, list: x, ttl: 1h}\n",
 		"below on deny":        "outcomes:\n  - {on: deny, below: true, list: x, ttl: 1h}\n",
-		"at on overload":       "outcomes:\n  - {on: overload, at: 30, list: x, ttl: 1h}\n",
+		"at on overload":       "outcomes:\n  - {on: overload, at: 10, list: x, ttl: 1h}\n",
 
 		// Действие: ровно одно, и оно осмысленное.
 		"neither do nor list": "outcomes:\n  - {on: allow}\n",
@@ -170,9 +170,9 @@ func TestOutcomeMatches(t *testing.T) {
 		{"deny matches redirect", Outcome{On: OnDeny}, protocol.VerdictRedirect, 0, true},
 		{"allow matches allow", Outcome{On: OnAllow}, protocol.VerdictAllow, 0, true},
 		{"allow ignores score", Outcome{On: OnAllow}, protocol.VerdictScore, 5, false},
-		// Перегрузка -- строка триггера, а не вердикт: снятие с allow-ответом
-		// не дёргает on: allow, и наоборот.
-		{"overload matches the trigger", Outcome{On: OnOverload}, OnOverload, 0, true},
+		// Перегрузка -- не вердикт: строку зовёт FireOverload по заполнению
+		// очереди, и по решению фазы она не срабатывает, как и on: allow по ней.
+		{"overload ignores its own word", Outcome{On: OnOverload}, OnOverload, 0, false},
 		{"overload ignores allow", Outcome{On: OnOverload}, protocol.VerdictAllow, 0, false},
 		{"allow ignores overload", Outcome{On: OnAllow}, OnOverload, 0, false},
 	}
@@ -268,7 +268,7 @@ func TestFireOnOverload(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fired := Fire(policy.Outcomes, OnOverload, 0, clientIP, "MODSEC_QUEUE_LIMIT")
+	fired := FireOverload(policy.Outcomes, 100, true, clientIP, "MODSEC_QUEUE_LIMIT")
 
 	if len(fired.Bans) != 1 || len(fired.Actions) != 1 {
 		t.Fatalf("fired = %+v", fired)

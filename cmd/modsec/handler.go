@@ -177,17 +177,16 @@ func (h *handler) evaluate(t *queue.Task, budget time.Duration, shed string) {
 		}}
 
 		/*
-		 * Инициаторы on: overload -- только на снятии из-за полной очереди и,
-		 * как у остальных триггеров, только на фазе запроса. Протухший бюджет
-		 * их не дёргает: дедлайн бывает и у короткой волны, а запись клиента в
-		 * набор за латентность контура была бы баном ни за что. Ответ этого
-		 * пути мгновенный, поэтому просьбы в нём доезжают до модуля; записи и
-		 * без него уехали бы -- их публикует сам инспектор.
+		 * Строки перегрузки на снятии из-за полной очереди срабатывают все,
+		 * каков бы ни был порог, и только на фазе запроса (internal/overload).
+		 * Протухший бюджет их не дёргает: дедлайн бывает и у короткой волны.
+		 * На ответе error модуль исполнит только свои глаголы; записи в наборы
+		 * публикует сам инспектор, и они уезжают всегда.
 		 */
 		var fired prior.Fired
 		if shed == queue.ReasonQueueLimit && t.Req.Phase == protocol.PhaseRequest {
-			fired = prior.Fire(h.registry.Outcomes(t.Req.Route.Profile),
-				prior.OnOverload, 0, t.Req.Conn.ClientIP, shed)
+			fired = prior.FireOverload(h.registry.Outcomes(t.Req.Route.Profile),
+				t.Fill, true, t.Req.Conn.ClientIP, shed)
 
 			if len(fired.Actions) != 0 {
 				reply.Actions = fired.Actions
@@ -369,6 +368,17 @@ func (h *handler) inspect(t *queue.Task, budget time.Duration) (*protocol.Reply,
 	 */
 	fired := prior.Fire(h.registry.Outcomes(sel.Profile), reply.Verdict,
 		scoreOf(reply), req.Conn.ClientIP, codeOf(reply))
+
+	/*
+	 * Строки перегрузки: запрос встал в очередь, заполненную не ниже их
+	 * порога. Решение у запроса настоящее, действие строки едет рядом с ним.
+	 */
+	more := prior.FireOverload(h.registry.Outcomes(sel.Profile), t.Fill, false,
+		req.Conn.ClientIP, queue.ReasonQueueLimit)
+
+	fired.Actions = append(fired.Actions, more.Actions...)
+	fired.Bans = append(fired.Bans, more.Bans...)
+	fired.Names = append(fired.Names, more.Names...)
 
 	if len(fired.Names) != 0 {
 		det.Engine["outcomes"] = fired.Names
