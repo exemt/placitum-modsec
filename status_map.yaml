@@ -1,0 +1,7 @@
+# Engine intervention status -> waf_deny_response record name. The module never takes a status from
+# the wire; a name missing from the nginx catalogue becomes waf_deny_response_default.
+
+403: blocked
+406: blocked
+400: malformed
+default: blocked
