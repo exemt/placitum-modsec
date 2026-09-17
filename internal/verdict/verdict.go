@@ -81,6 +81,14 @@ func From(req *protocol.Request, out *engine.Outcome, opt Options) *protocol.Rep
 	return reply
 }
 
+func Deny(req *protocol.Request, code string, opt Options) *protocol.Reply {
+	reply := protocol.NewReply(req, protocol.VerdictDeny)
+	reply.Reason = &protocol.Reason{Code: code}
+	reply.Response = &protocol.ResponseRef{Name: opt.statusName(0)}
+
+	return reply
+}
+
 func fromIntervention(reply *protocol.Reply, iv *engine.Intervention,
 	out *engine.Outcome, opt Options) *protocol.Reply {
 

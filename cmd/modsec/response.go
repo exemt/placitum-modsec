@@ -52,7 +52,7 @@ func (h *handler) inspectResponse(req *protocol.Request, budget time.Duration,
 			"live", h.stickyLive(),
 		)
 
-		return protocol.ErrorReply(req, codeResumeLost), audit.Details{
+		return verdict.Deny(req, codeResumeLost, h.opts), audit.Details{
 			Findings: []audit.Finding{{
 				Code:     "modsec-resume-lost",
 				Severity: audit.SeverityCritical,
