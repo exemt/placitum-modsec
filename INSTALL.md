@@ -11,7 +11,7 @@ and no service, and adding a copy touches neither the protection node nor the co
 | Component | Required | Why |
 | --- | --- | --- |
 | NATS | yes | the `waf.req.modsec` queue, audit, log, profile generations |
-| Exchange Redis | yes | request and response bodies by locator; an unreachable exchange stops the start |
+| Buffer Redis | yes | request and response bodies by locator; an unreachable buffer stops the start |
 | Internal Redis | yes | generation blobs: profiles, data files, policies |
 | Controller | yes | sends profiles as generations |
 | `geo` | for network and system writes | announcements and AS number by address |
@@ -21,7 +21,7 @@ and no service, and adding a copy touches neither the protection node nor the co
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `NATS_URL` | `nats://127.0.0.1:4222` | bus |
-| `REDIS_URL`, `REDIS_INTERNAL_URL` | from `inspector.conf` | exchange and internal Redis |
+| `REDIS_URL`, `REDIS_INTERNAL_URL` | from `inspector.conf` | buffer and internal Redis |
 | `WAF_MODSEC_SUBJECT` | `waf.req.modsec` | subscription; must match `subject=` in the inspector declaration |
 | `WAF_MODSEC_NAME` | `modsec` | name in the inspector registry and the presence frame |
 | `WAF_MODSEC_QUEUE` | the name | queue group on the bus |
@@ -74,7 +74,7 @@ docker exec <container> modsec-probe --uri "/?id=1%27+or+1%3D1--"
 The second call should come back with a score. The `start-period` of the health check is 20 seconds:
 CRS compiles at start, and there is no subscription until it is done.
 
-A healthy start logs the loaded profiles, the bus and exchange connections, the queue name, the worker
+A healthy start logs the loaded profiles, the bus and buffer connections, the queue name, the worker
 count, then `desired watch on` and the applied generation.
 
 ## Pitfalls

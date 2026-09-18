@@ -13,11 +13,11 @@ the engine has no catastrophic backtracking.
 module ──► waf.req.modsec ──►  modsec  ──► allow | score | deny
                                  │
                                  ├── profile: SecLang sets on top of CRS
-                                 ├── body: from the exchange by locator
-                                 └── neighbour requests: scale the score, skip the check
+                                 ├── body: from the buffer by locator
+                                 └── neighbour signals: scale the score, skip the check
 ```
 
-## How it judges
+## How it evaluates
 
 Each message becomes an engine transaction. The engine runs in `SecRuleEngine DetectionOnly`: the
 inspector reports confidence, and nginx denies by `waf_score_deny` of its phase. The CRS anomaly
@@ -31,7 +31,7 @@ A deny that does not depend on the score is configured apart: `WAF_MODSEC_DENY_R
 intervention maps to a deny page through `status_map.yaml` (403 and 406 to `blocked`, 400 to
 `malformed`); the status from the rule never reaches the client.
 
-**The body.** A body larger than the inline limit comes by locator from the exchange. A truncated
+**The body.** A body larger than the inline limit comes by locator from the buffer. A truncated
 body is not checked at all: a JSON or XML prefix is no longer a document, the rules would stay
 silent, and a clean `allow` would lie. The answer is `error` with `MODSEC_BODY_TRUNCATED`; an
 unavailable body is `error` with `MODSEC_BODY_UNAVAILABLE`. The route decides with
@@ -44,7 +44,7 @@ the registry was full, the time ran out), `resume=prefer` rebuilds the transacti
 snapshot, and `resume=require` answers `error` with `MODSEC_RESUME_LOST`. The audit tells the two
 paths apart by `resumed`.
 
-**WebSocket frames** from the client are judged by a synthetic transaction: a POST to the handshake
+**WebSocket frames** from the client are evaluated by a synthetic transaction: a POST to the handshake
 address with the handshake headers and one argument `frame=<payload>`, so CRS sees the frame content
 in `ARGS_POST:frame`. Binary frames are skipped with `MODSEC_FRAME_BINARY`.
 
@@ -94,7 +94,7 @@ swapped atomically; a set that does not compile is not applied. SecLang data fil
 and `@ipMatchFromFile` lie next to the profile's `*.conf`, and relative names are resolved against
 the profile directory.
 
-### Neighbour requests and outcome rows
+### Neighbour signals and outcome rows
 
 `policy.yaml` in the profile directory holds both sides of the action channel:
 
@@ -140,7 +140,7 @@ outcomes:                       # what the inspector itself tells the neighbours
   are not findings. The reason code, when the row has none, is `CRS_RULE_<number>`.
 - `on: overload` fires from `at` percent of queue fill (25..100; without `at` only on a dropped
   request), and only in the request phase.
-- A row does one thing: `to` with `do` asks a neighbour, `list` with `ttl` writes to a live set.
+- A row does one thing: `to` with `do` signals a neighbour, `list` with `ttl` writes to a live set.
   After a deny no neighbour request is delivered, but set writes, marks and records still work.
   `net`, `net_all` and `asn` need the geo coder (`WAF_MODSEC_GEO_ADDR`); a silent coder means `error`
   with `MODSEC_GEO_UNAVAILABLE`.
@@ -155,7 +155,7 @@ The outcome of each delivered request (`applied` or `no_rule`) and `score_raw`,
 | `MODSEC_SKIPPED` | a neighbour's `skip` request switched the check off |
 | `MODSEC_UNKNOWN_PROFILE` | the route names a profile that is not loaded |
 | `MODSEC_BODY_TRUNCATED` | the body is a prefix and is not checked |
-| `MODSEC_BODY_UNAVAILABLE` | the body did not come from the exchange |
+| `MODSEC_BODY_UNAVAILABLE` | the body did not come from the buffer |
 | `MODSEC_RESUME_LOST` | `resume=require`, and the transaction state is gone |
 | `MODSEC_FRAME_BINARY` | a binary WebSocket frame, skipped |
 | `MODSEC_GEO_UNAVAILABLE` | a row writes a network or a system, and the coder is silent |
