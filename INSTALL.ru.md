@@ -25,14 +25,14 @@
 | `WAF_MODSEC_NAME` | `modsec` | имя в реестре инспекторов и в кадре присутствия |
 | `WAF_MODSEC_QUEUE` | имя | очередь шины |
 | `WAF_MODSEC_PROFILES` | `./profiles`; в образе `/app/profiles` | профили до первого поколения |
-| `WAF_MODSEC_DATA` | `<профили>.applied`; в образе `/var/lib/waf/modsec` | куда раскатка кладёт применённое поколение |
+| `WAF_MODSEC_DATA` | `<профили>.applied`; в образе `/var/lib/waf/modsec` | куда сохраняется применённое поколение |
 | `WAF_MODSEC_STATUS_MAP` | `./status_map.yaml`; в образе `/app/status_map.yaml` | статус движка в имя страницы блокировки |
 | `WAF_MODSEC_DENY_RULE_IDS`, `WAF_MODSEC_DENY_TAGS` | пусто | правила и метки, срабатывание которых — блокировка, а не вклад в счёт |
 | `WAF_MODSEC_RESUME_MAX` | `4 × queue_max` | сколько открытых транзакций ждут своей фазы ответа |
 | `WAF_MODSEC_RESUME_TTL` | `30s` | сколько ждёт открытая транзакция |
 | `WAF_MODSEC_SECRETS` | пусто | каталог секретов, если профили на них ссылаются |
-| `WAF_MODSEC_GEO_ADDR` | пусто | кодер гео (`host:port`); пусто — записи сети и системы отвечают `error` |
-| `WAF_MODSEC_GEO_TIMEOUT`, `WAF_MODSEC_GEO_NEG_MAX` | `500ms`, `0` | ожидание кодера в бюджете сообщения и потолок отрицательного кэша |
+| `WAF_MODSEC_GEO_ADDR` | пусто | справочник сетей (`host:port`); пусто — записи сети и системы отвечают `error` |
+| `WAF_MODSEC_GEO_TIMEOUT`, `WAF_MODSEC_GEO_NEG_MAX` | `500ms`, `0` | ожидание справочника сетей в бюджете сообщения и предел отрицательного кэша |
 | `WAF_MODSEC_CONF` | `inspector.conf` в рабочем каталоге, затем `/app/inspector.conf` | очередь и адреса Redis |
 | `WAF_MODSEC_WORKERS` | число ядер | воркеры движка |
 | `WAF_MODSEC_QUEUE_DEPTH`, `WAF_MODSEC_QUEUE_FULL`, `WAF_MODSEC_QUEUE_EXPAND` | `256`, `drop`, `off` | очередь и поведение при переполнении; то же через `inspector.conf` |

@@ -32,8 +32,8 @@ and no service, and adding a copy touches neither the protection node nor the co
 | `WAF_MODSEC_RESUME_MAX` | `4 × queue_max` | how many open transactions wait for their response phase |
 | `WAF_MODSEC_RESUME_TTL` | `30s` | how long an open transaction waits |
 | `WAF_MODSEC_SECRETS` | empty | secrets directory, if profiles refer to secrets |
-| `WAF_MODSEC_GEO_ADDR` | empty | geo coder (`host:port`); empty makes network and system writes answer `error` |
-| `WAF_MODSEC_GEO_TIMEOUT`, `WAF_MODSEC_GEO_NEG_MAX` | `500ms`, `0` | coder wait within the message budget and negative cache limit |
+| `WAF_MODSEC_GEO_ADDR` | empty | network directory (`host:port`); empty makes network and system writes answer `error` |
+| `WAF_MODSEC_GEO_TIMEOUT`, `WAF_MODSEC_GEO_NEG_MAX` | `500ms`, `0` | network directory wait within the message budget and negative cache limit |
 | `WAF_MODSEC_CONF` | `inspector.conf` in the working directory, then `/app/inspector.conf` | queue and Redis settings |
 | `WAF_MODSEC_WORKERS` | number of CPUs | engine workers |
 | `WAF_MODSEC_QUEUE_DEPTH`, `WAF_MODSEC_QUEUE_FULL`, `WAF_MODSEC_QUEUE_EXPAND` | `256`, `drop`, `off` | queue and overflow behaviour; the same through `inspector.conf` |

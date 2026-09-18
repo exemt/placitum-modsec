@@ -142,7 +142,7 @@ outcomes:                       # what the inspector itself tells the neighbours
   request), and only in the request phase.
 - A row does one thing: `to` with `do` signals a neighbour, `list` with `ttl` writes to a live set.
   After a deny no neighbour request is delivered, but set writes, marks and records still work.
-  `net`, `net_all` and `asn` need the geo coder (`WAF_MODSEC_GEO_ADDR`); a silent coder means `error`
+  `net`, `net_all` and `asn` need the network directory (`WAF_MODSEC_GEO_ADDR`); a silent network directory means `error`
   with `MODSEC_GEO_UNAVAILABLE`.
 
 The outcome of each delivered request (`applied` or `no_rule`) and `score_raw`,
@@ -158,7 +158,7 @@ The outcome of each delivered request (`applied` or `no_rule`) and `score_raw`,
 | `MODSEC_BODY_UNAVAILABLE` | the body did not come from the buffer |
 | `MODSEC_RESUME_LOST` | `resume=require`, and the transaction state is gone |
 | `MODSEC_FRAME_BINARY` | a binary WebSocket frame, skipped |
-| `MODSEC_GEO_UNAVAILABLE` | a row writes a network or a system, and the coder is silent |
+| `MODSEC_GEO_UNAVAILABLE` | a row writes a network or a system, and the network directory is silent |
 | `MODSEC_SCORE_RANGE` | the calibrated score fell outside the range |
 | `MODSEC_QUEUE_LIMIT`, `MODSEC_DEADLINE_EXCEEDED` | overload: the queue is full or the budget is gone |
 | `MODSEC_UNSUPPORTED_VERSION`, `MODSEC_MALFORMED_REQUEST`, `MODSEC_PHASE_NOT_SUPPORTED`, `MODSEC_INTERNAL_ERROR` | a message the inspector cannot handle |
