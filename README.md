@@ -31,20 +31,26 @@ A deny that does not depend on the score is configured apart: `WAF_MODSEC_DENY_R
 intervention maps to a deny page through `status_map.yaml` (403 and 406 to `blocked`, 400 to
 `malformed`); the status from the rule never reaches the client.
 
-**The body.** A body larger than the inline limit comes by locator from the buffer. A truncated
+### The body
+
+A body larger than the inline limit comes by locator from the buffer. A truncated
 body is not checked at all: a JSON or XML prefix is no longer a document, the rules would stay
-silent, and a clean `allow` would lie. The answer is `error` with `MODSEC_BODY_TRUNCATED`; an
+silent, and the `allow` would be wrong. The answer is `error` with `MODSEC_BODY_TRUNCATED`; an
 unavailable body is `error` with `MODSEC_BODY_UNAVAILABLE`. The route decides with
 `waf_exception … inspector`.
 
-**The response phase** runs on the same transaction. With `keep=on` on the request call the inspector
+### The response phase
+
+The response phase runs on the same transaction. With `keep=on` on the request call the inspector
 keeps the transaction open and answers with its own subject; the response call with `resume=` comes
 back to it, and phases 3–4 run on the real state of phases 1–2. If the state is gone (the copy died,
 the registry was full, the time ran out), `resume=prefer` rebuilds the transaction from the request
 snapshot, and `resume=require` answers `error` with `MODSEC_RESUME_LOST`. The audit tells the two
 paths apart by `resumed`.
 
-**WebSocket frames** from the client are evaluated by a synthetic transaction: a POST to the handshake
+### WebSocket frames
+
+Frames from the client are evaluated by a synthetic transaction: a POST to the handshake
 address with the handshake headers and one argument `frame=<payload>`, so CRS sees the frame content
 in `ARGS_POST:frame`. Binary frames are skipped with `MODSEC_FRAME_BINARY`.
 
@@ -86,8 +92,8 @@ from the message. The files are included in lexical order:
 
 The image ships only `default`: CRS, paranoia level 1, with `attack-dos` removed because the local
 layer of the module handles floods before the bus. `default` must exist, or the process does not
-start. A route naming a profile that is not loaded gets `error` with `MODSEC_UNKNOWN_PROFILE`, not a
-fallback to `default`: another set of rules is a check of the wrong thing.
+start. A route naming a profile that is not loaded gets `error` with `MODSEC_UNKNOWN_PROFILE`; the
+inspector does not fall back to `default`.
 
 Profiles come from the controller as a generation: the new set is compiled next to the live one and
 swapped atomically; a set that does not compile is not applied. SecLang data files for `@pmFromFile`
