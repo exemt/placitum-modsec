@@ -45,7 +45,7 @@ The response phase runs on the same transaction. With `keep=on` on the request c
 keeps the transaction open and answers with its own subject; the response call with `resume=` comes
 back to it, and phases 3–4 run on the real state of phases 1–2. If the state is gone (the copy died,
 the registry was full, the time ran out), `resume=prefer` rebuilds the transaction from the request
-snapshot, and `resume=require` answers `error` with `MODSEC_RESUME_LOST`. The audit tells the two
+snapshot, and `resume=require` denies the request with `MODSEC_RESUME_LOST`. The audit tells the two
 paths apart by `resumed`.
 
 ### WebSocket frames
@@ -162,7 +162,7 @@ The outcome of each delivered request (`applied` or `no_rule`) and `score_raw`,
 | `MODSEC_UNKNOWN_PROFILE` | the route names a profile that is not loaded |
 | `MODSEC_BODY_TRUNCATED` | the body is a prefix and is not checked |
 | `MODSEC_BODY_UNAVAILABLE` | the body did not come from the buffer |
-| `MODSEC_RESUME_LOST` | `resume=require`, and the transaction state is gone |
+| `MODSEC_RESUME_LOST` | `resume=require`, and the transaction state is gone: the request is denied |
 | `MODSEC_FRAME_BINARY` | a binary WebSocket frame, skipped |
 | `MODSEC_GEO_UNAVAILABLE` | a row writes a network or a system, and the network directory is silent |
 | `MODSEC_SCORE_RANGE` | the calibrated score fell outside the range |
